@@ -6,6 +6,14 @@
   --font-sans: 'Outfit', system-ui, -apple-system, sans-serif;
 }
 
+@theme {
+  --breakpoint-xs: 400px;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   font-family: var(--font-sans);
   background-color: #f8fafc;
@@ -13,6 +21,16 @@ body {
     radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.05) 0px, transparent 50%),
     radial-gradient(at 100% 0%, rgba(168, 85, 247, 0.05) 0px, transparent 50%);
   min-height: 100vh;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Custom Scrollbar for Tabs */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 /* Glassmorphism utility */
