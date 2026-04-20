@@ -179,13 +179,16 @@ const App = () => {
             </div>
             <h1 className="text-base sm:text-xl font-black tracking-tighter">FinTrack</h1>
           </div>
-          <div className="flex items-center gap-2 bg-slate-50 px-2 sm:px-5 py-1.5 sm:py-2 rounded-lg sm:rounded-2xl border border-slate-100 hover:border-indigo-200 transition-colors max-w-[130px] sm:max-w-none">
+          <div className="flex items-center gap-2 bg-slate-50 px-2 sm:px-5 py-1.5 sm:py-2 rounded-lg sm:rounded-2xl border border-slate-100 hover:border-indigo-200 transition-colors max-w-[130px] sm:max-w-none relative overflow-hidden">
             <Calendar size={12} className="text-indigo-500 shrink-0" />
+            <span className="font-bold text-slate-600 text-[11px] sm:text-sm whitespace-nowrap">
+               {format(new Date(selectedDate), 'dd-MM-yyyy')}
+            </span>
             <input 
               type="date" 
               value={selectedDate} 
               onChange={(e) => setSelectedDate(e.target.value)} 
-              className="bg-transparent font-bold text-slate-600 focus:outline-none text-[11px] sm:text-sm cursor-pointer w-full" 
+              className="absolute inset-0 opacity-0 cursor-pointer" 
             />
           </div>
         </div>
@@ -290,25 +293,31 @@ const App = () => {
                  
                  {/* Range Selector */}
                  <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 mb-6 sm:mb-10">
-                    <div className="bg-white/5 border border-white/10 p-3 sm:p-4 rounded-xl sm:rounded-2xl flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
+                    <div className="bg-white/5 border border-white/10 p-3 sm:p-4 rounded-xl sm:rounded-2xl flex items-center gap-2 sm:gap-4 w-full sm:w-auto relative overflow-hidden">
                        <p className="text-[7px] sm:text-[9px] font-black text-indigo-400 uppercase tracking-widest leading-none">From</p>
+                       <span className="text-white font-bold text-[12px] sm:text-sm">
+                          {format(new Date(reportRange.start), 'dd-MM-yyyy')}
+                       </span>
                        <input 
                         type="date" 
                         value={reportRange.start}
                         onChange={(e) => setReportRange({ ...reportRange, start: e.target.value })}
-                        className="bg-transparent text-white font-bold outline-none cursor-pointer [color-scheme:dark] text-[12px] sm:text-sm flex-1 sm:flex-none"
+                        className="absolute inset-0 opacity-0 cursor-pointer"
                        />
                     </div>
                     <div className="text-white/20 hidden sm:block">
                        <ChevronRight size={20} />
                     </div>
-                    <div className="bg-white/5 border border-white/10 p-3 sm:p-4 rounded-xl sm:rounded-2xl flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
+                    <div className="bg-white/5 border border-white/10 p-3 sm:p-4 rounded-xl sm:rounded-2xl flex items-center gap-2 sm:gap-4 w-full sm:w-auto relative overflow-hidden">
                        <p className="text-[7px] sm:text-[9px] font-black text-indigo-400 uppercase tracking-widest leading-none">To</p>
+                       <span className="text-white font-bold text-[12px] sm:text-sm">
+                          {format(new Date(reportRange.end), 'dd-MM-yyyy')}
+                       </span>
                        <input 
                         type="date" 
                         value={reportRange.end}
                         onChange={(e) => setReportRange({ ...reportRange, end: e.target.value })}
-                        className="bg-transparent text-white font-bold outline-none cursor-pointer [color-scheme:dark] text-[12px] sm:text-sm flex-1 sm:flex-none"
+                        className="absolute inset-0 opacity-0 cursor-pointer"
                        />
                     </div>
                  </div>
@@ -320,16 +329,17 @@ const App = () => {
                       const range = eachDayOfInterval({ start: new Date(reportRange.start), end: new Date(reportRange.end) });
                       const allRecordsSnap = await get(ref(db, `dailyRecords`));
                       const allRecords = allRecordsSnap.val() || {};
-                      const rows = [["FinTrack Consolidated Financial Report"], ["Range Selection", `${reportRange.start} to ${reportRange.end}`], [""], ["Date", "Opening Balance", "Total Cash", "Bank Total", "Account Total", "Closing Balance", "Profit/Loss"]];
+                      const rows = [["FinTrack Consolidated Financial Report"], ["Range Selection", `${format(new Date(reportRange.start), 'dd-MM-yyyy')} to ${format(new Date(reportRange.end), 'dd-MM-yyyy')}`], [""], ["Date", "Opening Balance", "Total Cash", "Bank Total", "Account Total", "Closing Balance", "Profit/Loss"]];
                       range.forEach(day => {
                         const dateStr = format(day, 'yyyy-MM-dd');
+                        const displayDate = format(day, 'dd-MM-yyyy');
                         const data = allRecords[dateStr] || {};
                         const tc = Object.entries(data.cashDetails || {}).reduce((a, [d, c]) => a + (d * c), 0);
                         const tb = Object.values(data.bankDetails || {}).reduce((a, v) => a + (parseFloat(v) || 0), 0);
                         const ta = Object.values(data.accountDetails || {}).reduce((a, v) => a + (parseFloat(v) || 0), 0);
                         const cb = data.closingBalance || (tc + tb + ta);
                         const ob = data.openingBalance || 0;
-                        rows.push([dateStr, ob, tc, tb, ta, cb, cb - ob]);
+                        rows.push([displayDate, ob, tc, tb, ta, cb, cb - ob]);
                       });
                       const csvContent = "data:text/csv;charset=utf-8," + rows.map(e => e.join(",")).join("\n");
                       const encodedUri = encodeURI(csvContent);
@@ -637,9 +647,11 @@ const App = () => {
                             const allRecordsSnap = await get(ref(db, `dailyRecords`));
                             const allRecords = allRecordsSnap.val() || {};
                             
+                            const monthDisplay = format(new Date(year, month - 1), 'MM-yyyy');
+                            
                             const rows = [
                               ["FinTrack Monthly Expense Report"],
-                              ["Month", monthVal],
+                              ["Month", monthDisplay],
                               [""],
                               ["Date", "Expense Title", "Amount"]
                             ];
@@ -648,12 +660,13 @@ const App = () => {
                             
                             days.forEach(day => {
                               const dateStr = format(day, 'yyyy-MM-dd');
+                              const displayDate = format(day, 'dd-MM-yyyy');
                               const data = allRecords[dateStr] || {};
                               const dayExpenses = data.expenses || [];
                               
                               if (dayExpenses.length > 0) {
                                 dayExpenses.forEach(exp => {
-                                  rows.push([dateStr, exp.title, exp.amount]);
+                                  rows.push([displayDate, exp.title, exp.amount]);
                                   totalMonthExpense += (parseFloat(exp.amount) || 0);
                                 });
                               }
